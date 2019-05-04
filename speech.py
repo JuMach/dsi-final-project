@@ -7,7 +7,7 @@ with sr.Microphone() as source:
     audio = r.listen(source)
 
     try:
-        text = r.recognize_google(audio)
+        text = r.recognize_google(audio, language="es-ES")
         print (text)
     except:
         print ("Could not recognize your voice")

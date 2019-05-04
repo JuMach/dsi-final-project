@@ -2,4 +2,4 @@ SpeechRecognition==3.8.1
 Pillow==5.4.1
 opencv-contrib-python==4.1.0.25
 numpy==1.16.2
-./lib/PyAudio-0.2.11-cp37-cp37m-win_amd64.whl
+pyaudio==0.2.11
