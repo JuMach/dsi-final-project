@@ -106,5 +106,11 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# serialize extensions
-.yml
+# serialize file extensions
+*.yml
+
+# train file extenions
+*.gmm
+
+# audio folder
+dsi-speaker-recognition/development_set/

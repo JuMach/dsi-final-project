@@ -1,5 +1,7 @@
+opencv_contrib_python==4.1.0.25
+scipy==1.2.1
 SpeechRecognition==3.8.1
-Pillow==5.4.1
-opencv-contrib-python==4.1.0.25
+python_speech_features==0.6
 numpy==1.16.2
-pyaudio==0.2.11
+Pillow==6.0.0
+scikit_learn==0.20.3
