@@ -33,6 +33,8 @@ for root, dirs, files in os.walk(image_dir):
             #x_train.append(path) #save the images
 
             pil_image = Image.open(path).convert("L") #grayscale
+
+            #image_array = np.array(final_image, "uint8")
             image_array = np.array(pil_image, "uint8")
             #print (image_array)
 
@@ -41,6 +43,7 @@ for root, dirs, files in os.walk(image_dir):
             #print (faces)
 
             for (x, y, w, h) in faces:
+                #print ("Cara detectada para: " + label)
                 roi = image_array[y:y+h, x:x+w]
                 x_train.append(roi)
                 y_labels.append(id_)

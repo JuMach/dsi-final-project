@@ -28,9 +28,11 @@ while(True):
         roi_color = frame[y:y+h, x:x+w] #(xcord_start, x_cord_start + width)
 
         id_, conf = recognizer.predict(roi_gray) 
-        if conf >= 45 and conf <= 85:
+        if conf >= 45: #and conf <= 85:
             print (id_)
             print (labels[id_])
+            cv2.putText(frame, labels[id_] + ": " + str((conf))[0:5], (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 1, cv2.LINE_AA)
+
 
         img_item = "my-image.png"
         cv2.imwrite(img_item, roi_gray)
