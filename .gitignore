@@ -114,3 +114,6 @@ venv.bak/
 
 # audio folder
 dsi-speaker-recognition/development_set/
+
+# image folder
+dsi-facial-recognition/images/
