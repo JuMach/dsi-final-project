@@ -113,7 +113,7 @@ venv.bak/
 *.gmm
 
 # audio folder
-dsi_speaker_recognition/development_set/
+dsi_speaker_recognition/development_set/*
 
 # image folder
 dsi_facial_recognition/images/
