@@ -1,24 +1,59 @@
 import speech_recognition as sr
 import requests 
 import memcache
+import logging
+import coloredlogs
 
-r = sr.Recognizer()
-# r.energy_threshold = 400
-# r.dynamic_energy_threshold = False
-print('Waiting for speaker...')
 
-with sr.Microphone() as source:
-    print("Say something")
-    print('Starting to record...', end='')
-    audio = r.listen(source, timeout=1, phrase_time_limit=3)
-    print(' Done', flush=True)
+logger = logging.getLogger(__name__)
 
-    text = '<>'
-    try:
-        text = r.recognize_google(audio, language="es-ES")
-        print(text)
-    except sr.UnknownValueError:
-        print ("Could not recognize your voice")
 
+def initLogger(level='DEBUG'):
+    fmt = '%(asctime)s - %(message)s'
+    coloredlogs.install(fmt=fmt, datefmt='%d/%m/%Y %H:%M:%S', level=level)
+
+
+def speechRecog(r, client, t=4, log=False):
+    # r.energy_threshold = 400
+    # r.dynamic_energy_threshold = False
+    if log: logger.info('Waiting for microphone...', end='', flush=True)
+
+    with sr.Microphone() as source:
+        if log: logger.info(' Done', flush=True)
+        if log: logger.info("Say something!")
+        
+        try:
+            audio = r.listen(source, timeout=1, phrase_time_limit=3)
+        except sr.WaitTimeoutError:
+            if log: logger.info("> Wait timeout")
+            return
+
+        text = '<>'
+        try:
+            text = r.recognize_google(audio, language="es-ES")
+            if log: logger.info(text)
+        except sr.UnknownValueError:
+            if log: logger.info("> Could not recognize anything")
+            return
+        except sr.WaitTimeoutError:
+            if log: logger.info("> Wait timeout")
+            return
+
+        client.set("speech", text, time=t)
+
+
+def launch():
     client = memcache.Client([('127.0.0.1', 11211)])
-    client.set("speech", text, time=10)
+    r = sr.Recognizer()
+
+    speechRecog(r, client)
+
+
+def continuousSpeech():
+    while(True):
+        launch()
+
+
+if __name__ == "__main__":
+    while(True):
+        launch()

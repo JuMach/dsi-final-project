@@ -6,9 +6,7 @@ import coloredlogs
 import os
 import json
 import memcache
-from bottle import run, post, put, request, response
 from multiprocessing import Process, Queue
-from subprocess import Popen
 
 logger = logging.getLogger(__name__)
 text = ''
@@ -73,9 +71,6 @@ def recognise(frame, faceCascades, recognizer, labels):
 
     return frame
 
-def startServer():
-    run(host='localhost', port=8080, debug=True)
-
 
 class Recognizer:
 
@@ -114,8 +109,20 @@ class Recognizer:
                 # print(self.text)
                 textLabel = self.text
                 
-            cv2.putText(frame, textLabel, (int(frame.shape[1]/2), int(
-                frame.shape[0]/2)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1, cv2.LINE_AA)
+            w = cv2.getTextSize(textLabel, cv2.FONT_HERSHEY_SIMPLEX, 1, 1)[0]
+
+            offset = int((frame.shape[1] - w[0]) / 2)
+
+            # if w[0] > (frame.shape[1] - 40):
+            #     textLabel = textLabel[:20]
+
+            bottomLeft = (offset, frame.shape[0] - 30)
+            topRight = (offset + w[0], frame.shape[0] - 30 - w[1])
+
+            cv2.rectangle(frame, (bottomLeft[0] - 10, bottomLeft[1] + 10),
+                          (topRight[0] + 10, topRight[1] - 10), 
+                          (30, 30, 30), cv2.FILLED)
+            cv2.putText(frame, textLabel, (offset, frame.shape[0] - 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1, cv2.LINE_AA)
 
             #Mostramos el frame resultante
             cv2.imshow('frame', frame)
