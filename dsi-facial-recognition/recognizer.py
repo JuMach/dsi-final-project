@@ -19,7 +19,7 @@ def recognise():
     #face_cascade = cv2.CascadeClassifier('cascades/data/haarcascade_frontalface_alt2.xml')
     face_cascade = cv2.CascadeClassifier('cascades/data/haarcascade_frontalface_default.xml')
     recognizer = cv2.face.LBPHFaceRecognizer_create()
-    recognizer.read("trainner.yml")
+    recognizer.read("trainer.yml")
 
     labels = {"person_name": 1}
     with open("labels.pickle", 'rb') as f:

@@ -99,7 +99,7 @@ def createTrainModel():
         pickle.dump(label_ids, f)
 
     recognizer.train(x_train, np.array(y_labels))
-    recognizer.save("trainner.yml")
+    recognizer.save("trainer.yml")
 
 
 if __name__ == "__main__":
