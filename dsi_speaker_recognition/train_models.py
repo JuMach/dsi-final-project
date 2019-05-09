@@ -1,5 +1,5 @@
 #train_models.py
-
+import os
 import pickle
 import numpy as np
 from scipy.io.wavfile import read
@@ -29,7 +29,7 @@ for path in file_paths:
     print (path)
     
     # read the audio
-    sr,audio = read(source + path)
+    sr, audio = read(os.path.join(source, path))
     
     # extract 40 dimensional MFCC & delta MFCC features
     vector   = extract_features(audio,sr)
@@ -45,8 +45,10 @@ for path in file_paths:
         
         # dumping the trained gaussian model
         picklefile = path.split("-")[0]+".gmm"
-        pickle.dump(gmm, open(dest + picklefile,'wb'))
+        pickle.dump(gmm, open(os.path.join(dest, picklefile), 'wb'))
+
         print ('+ modeling completed for speaker:',picklefile," with data point = ",features.shape)    
+        
         features = np.asarray(())
         count = 0
     count = count + 1

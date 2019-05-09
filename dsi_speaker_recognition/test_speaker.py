@@ -2,6 +2,7 @@
 import os
 import pickle
 import numpy as np
+import wave
 from scipy.io.wavfile import read
 from speakerfeatures import extract_features
 import warnings
@@ -33,6 +34,7 @@ for path in file_paths:
     path = path.strip()   
     print (path)
     sr,audio = read(source + path)
+    print(sr)
     vector   = extract_features(audio,sr)
     
     log_likelihood = np.zeros(len(models)) 
