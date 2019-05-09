@@ -13,19 +13,19 @@ def initLogger(level='DEBUG'):
     coloredlogs.install(fmt=fmt, datefmt='%d/%m/%Y %H:%M:%S', level=level)
 
 
-def speechRecog(audio, r, client, t=4, log=False):
+def speechRecog(audio, r, client, t=15, log=False):
     text = '<>'
     try:
         text = r.recognize_google(audio, language="es-ES")
-        if log: logger.info(text)
+        logger.info(text)
     except sr.UnknownValueError:
-        if log: logger.info("> Could not recognize anything")
+        logger.info("> Could not recognize anything")
         return
     except sr.WaitTimeoutError:
-        if log: logger.info("> Wait timeout")
+        logger.info("> Wait timeout")
         return
 
-        client.set("speech", text, time=t)
+    client.set("speech", text, time=t)
 
 
 def speakerRecog(audio, gmm_files):
@@ -41,41 +41,40 @@ def speakerRecog(audio, gmm_files):
     log_likelihood = np.zeros(len(models))
 
 
-
-def launch(log = False):  
-    # speech instantiations      
-    client = memcache.Client([('127.0.0.1', 11211)])
-    r = sr.Recognizer()
-    
-    # speaker models
-    modelpath = os.path.join('dsi_speaker_recognition', 'speaker_models')
-    gmm_files = [os.path.join(modelpath, fname) for fname in
-        os.listdir(modelpath) if fname.endswith('.gmm')]
-
-
+def launch(r, client, modelpath, gmm_files, log=True):
     # r.energy_threshold = 400
     # r.dynamic_energy_threshold = False
-    if log: logger.info('Waiting for microphone...')
+    logger.info('Waiting for microphone...')
 
     with sr.Microphone() as source:
-        if log: logger.info(' Done')
-        if log: logger.info("Say something!")
+        logger.info(' Done')
+        logger.info("Say something!")
         
         try:
-            audio = r.listen(source, timeout=0, phrase_time_limit=3)
+            audio = r.listen(source, timeout=1, phrase_time_limit=3)
         except sr.WaitTimeoutError:
-            if log: logger.info("> Wait timeout")
+            logger.info("> Wait timeout")
             return
     
-    speechRecog(audio, r, client, log)
+        speechRecog(audio, r, client, log)
     # print(audio.getframerate())
 
 
 def continuousSpeech():
+    # speech instantiations
+    client = memcache.Client([('127.0.0.1', 11211)])
+    r = sr.Recognizer()
+
+    # speaker models
+    modelpath = os.path.join(os.path.abspath(
+        os.path.dirname(__file__)), 'speaker_models')
+    gmm_files = [os.path.join(modelpath, fname) for fname in
+                 os.listdir(modelpath) if fname.endswith('.gmm')]
+
     while(True):
-        launch()
+        launch(r, client, modelpath, gmm_files)
 
 
 if __name__ == "__main__":
-    while(True):
-        launch()
+    initLogger()
+    continuousSpeech()
