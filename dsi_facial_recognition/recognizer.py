@@ -6,6 +6,7 @@ import coloredlogs
 import os
 import json
 import memcache
+import unidecode
 from multiprocessing import Process, Queue
 
 logger = logging.getLogger(__name__)
@@ -121,7 +122,8 @@ class Recognizer:
             self.text = self.client.get("speech")
             if self.text is not None:
                 # print(self.text)
-                textLabel = self.text
+                textLabel = unidecode.unidecode(self.text)
+                # textLabel = self.text
                 
             w = cv2.getTextSize(textLabel, cv2.FONT_HERSHEY_SIMPLEX, 1, 1)[0]
 

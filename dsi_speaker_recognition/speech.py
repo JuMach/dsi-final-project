@@ -1,5 +1,4 @@
 import speech_recognition as sr
-import requests
 import memcache
 import logging
 import coloredlogs
