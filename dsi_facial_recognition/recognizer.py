@@ -10,6 +10,14 @@ from multiprocessing import Process, Queue
 
 logger = logging.getLogger(__name__)
 text = ''
+colors = { 
+    'Ainara': (255, 0, 0),
+    'Juan': (0, 255, 0),
+    'Mario': (0, 76, 255),
+    'Belen': (221, 255, 0),
+    'Miguel': (246, 0, 255),
+    'Kike': (0, 255, 144)
+}
 
 def initLogger(level='DEBUG'):
     # fmt = '%(asctime)s - %(levelname)s: %(message)s'
@@ -21,6 +29,7 @@ def initLogger(level='DEBUG'):
 
 def recognise(frame, faceCascades, recognizer, labels):
     idx = 0
+    recognizedId = None
 
     for face_cascade in faceCascades:
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -40,10 +49,9 @@ def recognise(frame, faceCascades, recognizer, labels):
             id_, conf = recognizer.predict(croppedROI)
             confidence = 100 - (conf*100 / 255)
             if confidence >= 60:  # and conf <= 85:
-                # print (id_)
-                # print (labels[id_])
+                recognizedId = id_
                 cv2.putText(frame, labels[id_] + ": " + '{:3.2f}'.format(
-                    confidence), (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1, cv2.LINE_AA)
+                    confidence), (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, colors[labels[id_]], 1, cv2.LINE_AA)
                 # cv2.putText(frame, text, (x - 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1, cv2.LINE_AA)
 
             if confidence > 100:
@@ -58,8 +66,8 @@ def recognise(frame, faceCascades, recognizer, labels):
             end_cord_x = x + w
             end_cord_y = y + h
 
-            cv2.rectangle(frame, (x, y), (end_cord_x,
-                                            end_cord_y), color, stroke)
+            cv2.rectangle(frame, (x, y), (end_cord_x, end_cord_y), 
+                colors[labels[id_]], stroke)
 
         if len(faces) > 0:
             # logger.debug(path.split('\\')[-1] + '\t✓')
@@ -69,13 +77,14 @@ def recognise(frame, faceCascades, recognizer, labels):
                 logger.warning('\t⛌ [{}]'.format(idx))
         idx += 1
 
-    return frame
+    return recognizedId, frame
 
 
 class Recognizer:
 
     def __init__(self):
         self.text = 'Placeholder'
+        self.speaker = None
         self.client = memcache.Client([('127.0.0.1', 11211)])
         initLogger()
         
@@ -101,7 +110,12 @@ class Recognizer:
         while(True):
 
             ret, frame = cap.read()
-            frame = recognise(frame, faceCascades, recognizer, labels)
+            id_, frame = recognise(frame, faceCascades, recognizer, labels)
+
+            textColor = (255, 255, 255)
+            self.speaker = self.client.get("speaker")
+            if self.speaker in colors:
+                textColor = colors[self.speaker]
 
             textLabel = '<...>'
             self.text = self.client.get("speech")
@@ -122,7 +136,10 @@ class Recognizer:
             cv2.rectangle(frame, (bottomLeft[0] - 10, bottomLeft[1] + 10),
                           (topRight[0] + 10, topRight[1] - 10), 
                           (30, 30, 30), cv2.FILLED)
-            cv2.putText(frame, textLabel, (offset, frame.shape[0] - 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1, cv2.LINE_AA)
+
+
+            cv2.putText(frame, textLabel, (offset,frame.shape[0] - 30), 
+                cv2.FONT_HERSHEY_SIMPLEX, 1, textColor, 1, cv2.LINE_AA)
 
             #Mostramos el frame resultante
             cv2.imshow('frame', frame)

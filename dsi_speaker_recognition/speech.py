@@ -1,11 +1,19 @@
 import speech_recognition as sr
-import requests 
+import requests
 import memcache
 import logging
 import coloredlogs
+import io
 import os
+import time
+import pickle
+import numpy as np
+from dsi_speaker_recognition import speakerfeatures as sf
+from scipy.io.wavfile import read as wavRead
+
 
 logger = logging.getLogger(__name__)
+SAMPLE_RATE = 16000
 
 
 def initLogger(level='DEBUG'):
@@ -14,53 +22,63 @@ def initLogger(level='DEBUG'):
 
 
 def speechRecog(audio, r, client, t=15, log=False):
-    text = '<>'
+    text = '<...>'
     try:
         text = r.recognize_google(audio, language="es-ES")
-        logger.info(text)
+        if log: logger.info(text)
     except sr.UnknownValueError:
-        logger.info("> Could not recognize anything")
+        if log: logger.info("> Could not recognize anything")
         return
     except sr.WaitTimeoutError:
-        logger.info("> Wait timeout")
+        if log: logger.info("> Wait timeout")
         return
 
-    client.set("speech", text, time=t)
+    logger.info('Detected speech: "{}"'.format(text))
+    client.set("speech", text, time=4)
 
 
-def speakerRecog(audio, gmm_files):
-
+def speakerRecog(audio, gmm_files, client):
     #Load the Gaussian gender Models
     models = [pickle.load(open(fname, 'rb')) for fname in gmm_files]
     speakers = [fname.split("\\")[-1].split(".gmm")[0] for fname
                 in gmm_files]
-    
-    sr, audio = read(source + path)
-    vector = extract_features(audio, sr)
 
+    vector = sf.extract_features(audio, SAMPLE_RATE)
     log_likelihood = np.zeros(len(models))
 
+    for i in range(len(models)):
+        gmm = models[i] 
+        scores = np.array(gmm.score(vector))
+        log_likelihood[i] = scores.sum()
 
-def launch(r, client, modelpath, gmm_files, log=True):
+    winner = np.argmax(log_likelihood)
+    logger.info('Detected speaker: "{}"'.format(speakers[winner]))
+    client.set("speaker", speakers[winner], time=4)
+
+
+def launch(r, client, modelpath, gmm_files, log=False):
     # r.energy_threshold = 400
     # r.dynamic_energy_threshold = False
-    logger.info('Waiting for microphone...')
+    if log: logger.info('Waiting for microphone...')
 
-    with sr.Microphone() as source:
-        logger.info(' Done')
-        logger.info("Say something!")
-        
+    with sr.Microphone(sample_rate=SAMPLE_RATE) as source:
+        if log: logger.info(' Done')
+        if log: logger.info("Say something!")
+
         try:
             audio = r.listen(source, timeout=1, phrase_time_limit=3)
         except sr.WaitTimeoutError:
-            logger.info("> Wait timeout")
+            if log: logger.info("> Wait timeout")
             return
-    
+
         speechRecog(audio, r, client, log)
-    # print(audio.getframerate())
+
+        sampleRate, audioNPArray = wavRead(io.BytesIO(audio.get_wav_data()))
+        speakerRecog(audioNPArray, gmm_files, client)
 
 
 def continuousSpeech():
+    initLogger()
     # speech instantiations
     client = memcache.Client([('127.0.0.1', 11211)])
     r = sr.Recognizer()
@@ -72,9 +90,13 @@ def continuousSpeech():
                  os.listdir(modelpath) if fname.endswith('.gmm')]
 
     while(True):
+        duration = time.time()
         launch(r, client, modelpath, gmm_files)
 
+        if time.time() - duration < 2:
+            pass
+            # print(time.time() - duration)
+            # time.sleep(2 - (time.time() - duration))
 
 if __name__ == "__main__":
-    initLogger()
     continuousSpeech()

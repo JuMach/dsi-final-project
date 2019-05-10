@@ -10,16 +10,13 @@ warnings.filterwarnings("ignore")
 
 
 #path to training data
-source   = "development_set\\"   
-
+source   = "development_set"   
 #path where training speakers will be saved
-dest = "speaker_models\\"
+dest = "speaker_models"
 
 train_file = "development_set_enroll.txt"        
 
-
 file_paths = open(train_file,'r')
-
 count = 1
 
 # Extracting features for each speaker (5 files per speakers)
@@ -30,6 +27,7 @@ for path in file_paths:
     
     # read the audio
     sr, audio = read(os.path.join(source, path))
+    print(sr)
     
     # extract 40 dimensional MFCC & delta MFCC features
     vector   = extract_features(audio,sr)
